@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ title }} - Trytt System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+                <a href="{% url 'core:order_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> 返回訂單列表
+                </a>
+            </div>
+
+            <form method="post" id="orderForm">
+                {% csrf_token %}
+                
+                <!-- Order Basic Information -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">訂單基本資料</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {% if not form.instance.pk %}
+                                            <!-- Member search for new orders -->
+                                            <div class="mb-3">
+                                                <label for="{{ form.member_search.id_for_label }}" class="form-label">
+                                                    {{ form.member_search.label }} <span class="text-danger">*</span>
+                                                </label>
+                                                <div class="position-relative">
+                                                    {{ form.member_search }}
+                                                    <div id="member-search-results" class="position-absolute w-100 bg-white border rounded shadow-sm" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;">
+                                                        <!-- Search results will be populated here -->
+                                                    </div>
+                                                </div>
+                                                <style>
+                                                    .member-result:hover {
+                                                        background-color: #f8f9fa !important;
+                                                    }
+                                                    .member-result:last-child {
+                                                        border-bottom: none !important;
+                                                    }
+                                                    #member-search-results {
+                                                        border-top: none;
+                                                        border-top-left-radius: 0;
+                                                        border-top-right-radius: 0;
+                                                    }
+                                                </style>
+                                                <div id="selected-member-display" class="mt-2" style="display: none;">
+                                                    <div class="alert alert-success">
+                                                        <strong>已選擇會員：</strong>
+                                                        <span id="selected-member-info"></span>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="clearMemberSelection()">重新選擇</button>
+                                                    </div>
+                                                </div>
+                                                {{ form.member }}
+                                                {% if form.member.errors %}
+                                                    <div class="text-danger small">
+                                                        {% for error in form.member.errors %}
+                                                            <div>{{ error }}</div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <!-- Member display for existing orders -->
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    {{ form.member.label }}
+                                                </label>
+                                                <div class="form-control-plaintext bg-light border rounded p-2">
+                                                    <strong>{{ form.instance.member.name }}</strong> ({{ form.instance.member.member_code }})
+                                                </div>
+                                                <div class="form-text text-muted">訂單會員不可修改</div>
+                                                <!-- Hidden field to maintain form structure -->
+                                                {{ form.member.as_hidden }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.order_date.id_for_label }}" class="form-label">
+                                                {{ form.order_date.label }} <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.order_date }}
+                                            {% if form.order_date.help_text %}
+                                                <div class="form-text text-muted">{{ form.order_date.help_text }}</div>
+                                            {% endif %}
+                                            {% if form.order_date.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.order_date.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.payment_method.id_for_label }}" class="form-label">
+                                                {{ form.payment_method.label }} <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.payment_method }}
+                                            {% if form.instance.pk and form.instance.order_status == 'paid' %}
+                                                <!-- Hidden input to preserve value when select is disabled -->
+                                                <input type="hidden" name="payment_method" value="{{ form.instance.payment_method }}">
+                                            {% endif %}
+                                            {% if form.payment_method.help_text %}
+                                                <div class="form-text text-muted">{{ form.payment_method.help_text }}</div>
+                                            {% endif %}
+                                            {% if form.payment_method.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.payment_method.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.order_status.id_for_label }}" class="form-label">
+                                                {{ form.order_status.label }} <span class="text-danger">*</span>
+                                            </label>
+                                            {{ form.order_status }}
+                                            {% if form.instance.pk and form.instance.order_status == 'paid' %}
+                                                <!-- Hidden input to preserve value when select is disabled -->
+                                                <input type="hidden" name="order_status" value="{{ form.instance.order_status }}">
+                                            {% endif %}
+                                            {% if form.order_status.help_text %}
+                                                <div class="form-text text-muted">{{ form.order_status.help_text }}</div>
+                                            {% endif %}
+                                            {% if form.order_status.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.order_status.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                                {{ form.notes.label }}
+                                            </label>
+                                            {{ form.notes }}
+                                            {% if form.notes.errors %}
+                                                <div class="text-danger small">
+                                                    {% for error in form.notes.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">訂單明細</h5>
+                                {% if not order_items %}
+                                <button type="button" class="btn btn-sm btn-success" onclick="addOrderItem()">
+                                    <i class="bi bi-plus"></i> 新增項目
+                                </button>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                {% if order_items %}
+                                    <!-- Display existing order items (read-only) -->
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="text-center">項目類型</th>
+                                                    <th class="text-center">項目名稱</th>
+                                                    <th class="text-center">數量</th>
+                                                    <th class="text-center">單價</th>
+                                                    <th class="text-center">小計</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in order_items %}
+                                                <tr>
+                                                    <td class="text-center">
+                                                        {% if item.item_type == 'course' %}
+                                                            <span class="badge bg-info">課程</span>
+                                                        {% elif item.item_type == 'product' %}
+                                                            <span class="badge bg-warning">商品</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">{{ item.get_item_name }}</td>
+                                                    <td class="text-center">{{ item.quantity }}</td>
+                                                    <td class="text-center">${{ item.unit_price|floatformat:0 }}</td>
+                                                    <td class="text-center fw-bold">${{ item.total_price|floatformat:0 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                            <tfoot class="table-light">
+                                                <tr>
+                                                    <th colspan="4" class="text-center">總計:</th>
+                                                    <th class="text-center">${{ form.instance.total_amount|floatformat:0 }}</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="bi bi-info-circle"></i> 
+                                        訂單明細不可修改。如需修改明細，請取消此訂單並重新建立。
+                                    </div>
+                                {% else %}
+                                    <!-- Dynamic order items for new orders -->
+                                    <div id="orderItems">
+                                        <!-- Order items will be added here dynamically -->
+                                    </div>
+                                    <div class="text-end mt-3">
+                                        <h5>總金額: $<span id="totalAmount">0</span></h5>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'core:order_list' %}" class="btn btn-secondary">取消</a>
+                            <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden template for order items -->
+<template id="orderItemTemplate">
+    <div class="order-item border rounded p-3 mb-3">
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">項目類型</label>
+                <select name="item_type" class="form-control" onchange="updateItemOptions(this)">
+                    <option value="">請選擇</option>
+                    <option value="course">課程</option>
+                    <option value="product">商品</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">項目</label>
+                <select name="item_id" class="form-control" onchange="updateQuantityPriceOptions(this)">
+                    <option value="">請先選擇類型</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">數量</label>
+                <select name="quantity" class="form-control" onchange="calculateTotal(this)">
+                    <option value="">請先選擇項目</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">單價</label>
+                <select name="unit_price" class="form-control" onchange="calculateTotal(this)">
+                    <option value="">請先選擇項目</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">小計</label>
+                <div class="form-control-plaintext text-end fw-bold">$0</div>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeOrderItem(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% load static %}
+<script src="{% static 'js/order_form.js' %}"></script>
+
+<style>
+/* Style for readonly fields when order is paid */
+.form-control[readonly] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.form-control[disabled] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,37 @@
+{
+  "version": "faq-demo-v1",
+  "locale": "zh-TW",
+  "start_node": "select_topic",
+  "nodes": {
+    "select_topic": {
+      "id": "select_topic",
+      "label": "Select topic",
+      "node_type": "faq",
+      "message": "請問您想查詢哪一類問題？",
+      "options": [
+        {
+          "id": "topic_product",
+          "label": "產品規格",
+          "action": "handoff_ai"
+        },
+        {
+          "id": "topic_warranty",
+          "label": "保固服務",
+          "action": "next_node",
+          "next_node": "warranty_info"
+        },
+        {
+          "id": "topic_contact",
+          "label": "聯絡客服",
+          "action": "contact_page"
+        }
+      ]
+    },
+    "warranty_info": {
+      "id": "warranty_info",
+      "label": "Warranty information",
+      "node_type": "terminal",
+      "message": "請至官方支援頁面填寫服務申請表，系統會寄送確認通知。"
+    }
+  }
+}

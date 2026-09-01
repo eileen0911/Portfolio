@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ title }} - Trytt System{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+            </div>
+
+            <!-- Member Search Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">會員查詢</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="member-phone-search" class="form-label">
+                                            會員手機號碼 <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="position-relative">
+                                            <input type="text" class="form-control form-control-lg"
+                                                id="member-phone-search" placeholder="請輸入會員手機號碼" autocomplete="off">
+                                            <div id="member-search-results"
+                                                class="position-absolute w-100 bg-white border rounded shadow-sm"
+                                                style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;">
+                                                <!-- Search results will be populated here -->
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-primary" onclick="searchMember()">
+                                                <i class="bi bi-search"></i> 查詢會員
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary ms-2"
+                                                onclick="clearPhoneInput()">
+                                                <i class="bi bi-x"></i> 清除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Virtual Keyboard -->
+                                <div class="col-md-6">
+                                    <div class="virtual-keyboard-container">
+                                        <div class="keyboard-header">
+                                            <h6 class="mb-0">數字鍵盤</h6>
+                                        </div>
+                                        <div class="virtual-keyboard">
+                                            <div class="keyboard-row">
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('1')">1</button>
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('2')">2</button>
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('3')">3</button>
+                                            </div>
+                                            <div class="keyboard-row">
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('4')">4</button>
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('5')">5</button>
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('6')">6</button>
+                                            </div>
+                                            <div class="keyboard-row">
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('7')">7</button>
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('8')">8</button>
+                                                <button type="button" class="key-btn"
+                                                    onclick="addToPhone('9')">9</button>
+                                            </div>
+                                            <div class="keyboard-row">
+                                                <button type="button" class="key-btn key-btn-zero"
+                                                    onclick="addToPhone('0')">0</button>
+                                                <button type="button" class="key-btn key-btn-delete"
+                                                    onclick="removeFromPhone('刪除')">
+                                                    <i class="bi bi-backspace"></i>
+                                                    <span class="btn-text">刪除</span>
+                                                </button>
+                                                <button type="button" class="key-btn key-btn-clear"
+                                                    onclick="clearPhoneInput('清除')">
+                                                    <i class="bi bi-x"></i>
+                                                    <span class="btn-text">清除</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Information Display -->
+            <div id="member-info-section" class="row" style="display: none;">
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">會員資料</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <strong>會員姓名：</strong>
+                                    <span id="member-name"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>手機號碼：</strong>
+                                    <span id="member-phone"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <strong class="text-nowrap me-2">上課教練：</strong>
+                                        <select id="session-coach-select" class="form-select">
+                                            {% for coach in active_coaches %}
+                                            <option value="{{ coach.id }}">{{ coach.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-text small">※ 預設為負責教練，代課時可手動修改</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Selection Section -->
+            <div id="course-selection-section" class="row" style="display: none;">
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">課程選擇</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="course-list">
+                                <!-- Course list will be populated here -->
+                            </div>
+                            <div id="no-courses-message" class="alert alert-info" style="display: none;">
+                                <i class="bi bi-info-circle"></i> 此會員目前沒有可用的課程餘額。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Success Message Section -->
+            <div id="success-message-section" class="row" style="display: none;">
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">授課記錄建立成功</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-success">
+                                <h6>授課記錄詳情：</h6>
+                                <ul class="mb-0">
+                                    <li><strong>授課編號：</strong><span id="success-session-code"></span></li>
+                                    <li><strong>會員姓名：</strong><span id="success-member-name"></span></li>
+                                    <li><strong>上課教練：</strong><span id="success-coach-name"></span></li>
+                                    <li><strong>課程名稱：</strong><span id="success-course-name"></span></li>
+                                    <li><strong>授課日期與時間：</strong><span id="success-session-date"></span></li>
+                                    <li><strong>訂單編號：</strong><span id="success-order-code"></span></li>
+                                    <li><strong>訂單日期：</strong><span id="success-order-date"></span></li>
+                                </ul>
+                            </div>
+                            <div class="text-end">
+                                <button type="button" class="btn btn-primary" onclick="resetForm()">
+                                    <i class="bi bi-check"></i> 結束
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden template for course items -->
+<template id="courseItemTemplate">
+    <div class="course-item border rounded p-3 mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <strong>課程名稱：</strong>
+                <span class="course-name"></span>
+            </div>
+            <div class="col-md-2">
+                <strong>課程編號：</strong>
+                <span class="course-code"></span>
+            </div>
+            <div class="col-md-2">
+                <strong>剩餘堂數：</strong>
+                <span class="remaining-quantity"></span>
+            </div>
+            <div class="col-md-2">
+                <strong>訂單編號：</strong>
+                <span class="order-code"></span>
+            </div>
+            <div class="col-md-2">
+                <strong>訂單日期：</strong>
+                <span class="order-date"></span>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-success btn-sm" onclick="deductCourse(this)">
+                    <i class="bi bi-check"></i> 扣課
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+    .member-result:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    .member-result:last-child {
+        border-bottom: none !important;
+    }
+
+    #member-search-results {
+        border-top: none;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+
+    .course-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Modern Virtual Keyboard Styles */
+    .virtual-keyboard-container {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-top: 10px;
+        width: fit-content;
+        max-width: 220px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .keyboard-header {
+        color: #495057;
+        text-align: center;
+        margin-bottom: 15px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .virtual-keyboard {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .keyboard-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    /* Base button styles - applies to ALL key buttons */
+    .key-btn,
+    .key-btn-zero,
+    .key-btn-delete,
+    .key-btn-clear {
+        width: 60px;
+        height: 50px;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #495057;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+    }
+
+    /* Hover effect for all buttons */
+    .key-btn:hover,
+    .key-btn-zero:hover,
+    .key-btn-delete:hover,
+    .key-btn-clear:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Active effect for all buttons */
+    .key-btn:active,
+    .key-btn-zero:active,
+    .key-btn-delete:active,
+    .key-btn-clear:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Icon and text styling for delete and clear buttons */
+    .key-btn-delete,
+    .key-btn-clear {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .key-btn-delete i,
+    .key-btn-clear i {
+        font-size: 14px;
+        color: #6c757d;
+        display: block;
+    }
+
+    .key-btn-delete .btn-text,
+    .key-btn-clear .btn-text {
+        font-size: 10px;
+        color: #6c757d;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .virtual-keyboard-container {
+            margin-top: 20px;
+            padding: 15px;
+        }
+
+        .key-btn,
+        .key-btn-zero,
+        .key-btn-delete,
+        .key-btn-clear {
+            width: 50px;
+            height: 45px;
+            font-size: 16px;
+        }
+
+        .key-btn-delete i,
+        .key-btn-clear i {
+            font-size: 14px;
+        }
+    }
+</style>
+
+{% load static %}
+<script src="{% static 'js/session_form.js' %}"></script>
+{% endblock %}

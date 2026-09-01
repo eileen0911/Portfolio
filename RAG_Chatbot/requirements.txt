@@ -1,0 +1,13 @@
+qdrant-client
+rank_bm25
+jieba
+apscheduler
+requests
+python-dotenv
+openai
+tiktoken
+flask
+flask-cors
+beautifulsoup4
+fastapi
+uvicorn

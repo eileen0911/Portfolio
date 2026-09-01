@@ -1,0 +1,130 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>{{ title }}</h1>
+    
+    <div class="description">
+        <p>{% trans '使用此功能可以批量導入歷史數據到系統中。請選擇要導入的數據類型，下載模板，整理數據後上傳檔案。' %}</p>
+    </div>
+    
+    <div class="import-options">
+        <h2>{% trans '導入類型選擇' %}</h2>
+        
+        <form method="post" action="{% url 'admin:core_import_type_selection' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="field-box">
+                    <label for="{{ import_type_form.import_type.id_for_label }}">{{ import_type_form.import_type.label }}:</label>
+                    {{ import_type_form.import_type }}
+                    {% if import_type_form.import_type.help_text %}
+                        <p class="help">{{ import_type_form.import_type.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="submit-row">
+                <input type="submit" value="{% trans '選擇導入類型' %}" class="default" />
+            </div>
+        </form>
+    </div>
+    
+    <div class="import-info">
+        <h2>{% trans '導入說明' %}</h2>
+        
+        <div class="import-type-info">
+            <h3>{% trans '1. 會員數據導入' %}</h3>
+            <ul>
+                <li>{% trans '批量導入會員基本資料' %}</li>
+                <li>{% trans '必填欄位：姓名、手機號碼、負責教練、註冊日期、狀態' %}</li>
+                <li>{% trans '系統會自動檢查重複的手機號碼' %}</li>
+            </ul>
+        </div>
+        
+        <div class="import-type-info">
+            <h3>{% trans '2. 訂單數據導入' %}</h3>
+            <ul>
+                <li>{% trans '批量導入歷史訂單資料' %}</li>
+                <li>{% trans '必填欄位：會員手機號碼、訂單日期、課程名稱、購買數量、單價、付款方式、訂單狀態' %}</li>
+                <li>{% trans '系統會自動建立課程庫存記錄' %}</li>
+            </ul>
+        </div>
+        
+        <div class="import-type-info">
+            <h3>{% trans '3. 授課記錄導入' %}</h3>
+            <ul>
+                <li>{% trans '批量導入授課記錄' %}</li>
+                <li>{% trans '必填欄位：會員手機號碼、課程名稱、授課日期' %}</li>
+                <li>{% trans '系統會自動從會員課程庫存中扣減' %}</li>
+                <li>{% trans '庫存不足時導入會失敗' %}</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="import-steps">
+        <h2>{% trans '導入流程' %}</h2>
+        <ol>
+            <li>{% trans '選擇導入類型' %}</li>
+            <li>{% trans '下載 Excel 模板' %}</li>
+            <li>{% trans '整理數據並填入模板' %}</li>
+            <li>{% trans '上傳檔案' %}</li>
+            <li>{% trans '系統驗證數據' %}</li>
+            <li>{% trans '確認導入' %}</li>
+        </ol>
+    </div>
+</div>
+
+<style>
+.import-options {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.import-info {
+    margin: 20px 0;
+}
+
+.import-type-info {
+    margin: 15px 0;
+    padding: 15px;
+    border-left: 4px solid #417690;
+    background-color: #f8f8f8;
+}
+
+.import-type-info h3 {
+    margin-top: 0;
+    color: #417690;
+}
+
+.import-steps {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.import-steps ol {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.import-steps li {
+    margin: 5px 0;
+    padding: 5px 0;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% translate "課程庫存查詢" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{% translate "課程庫存查詢" %}</h2>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                {{ search_form.search_term }}
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-search"></i> {% translate "搜尋" %}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'core:course_balance_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> {% translate "清除" %}
+                            </a>
+                        </div>
+                    </form>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            {% translate "僅顯示剩餘數量大於0的課程庫存記錄" %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Balance List -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">{% translate "會員編號" %}</th>
+                                    <th class="text-center">{% translate "會員姓名" %}</th>
+                                    <th class="text-center">{% translate "課程名稱" %}</th>
+                                    <th class="text-center">{% translate "訂單編號" %}</th>
+                                    <th class="text-center">{% translate "訂單日期" %}</th>
+                                    <th class="text-center">{% translate "購買數量" %}</th>
+                                    <th class="text-center">{% translate "剩餘數量" %}</th>
+                                    <th class="text-center">{% translate "狀態" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for balance in course_balances %}
+                                <tr>
+                                    <td class="text-center">{{ balance.member.member_code }}</td>
+                                    <td class="text-center">{{ balance.member.name }}</td>
+                                    <td class="text-center">{{ balance.course.name }}</td>
+                                    <td class="text-center">{{ balance.order.order_code }}</td>
+                                    <td class="text-center">{{ balance.order.order_date|date:"Y-m-d" }}</td>
+                                    <td class="text-center">{{ balance.initial_quantity }}</td>
+                                    <td class="text-center">{{ balance.remaining_quantity }}</td>
+                                    <td class="text-center">
+                                        <span class="badge {% if balance.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ balance.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        {% if request.GET.search_term %}
+                                            {% translate "沒有找到符合條件的課程庫存記錄" %}
+                                        {% else %}
+                                            {% translate "目前沒有剩餘課程庫存記錄" %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.paginator.num_pages > 1 %}
+                    <nav aria-label="課程庫存分頁">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}">第一頁</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}">上一頁</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+                                </span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}">下一頁</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}">最後一頁</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Highlight search results if search parameter exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search_term');
+        if (searchQuery) {
+            document.querySelector('input[name="search_term"]').value = searchQuery;
+        }
+    });
+</script>
+{% endblock %}

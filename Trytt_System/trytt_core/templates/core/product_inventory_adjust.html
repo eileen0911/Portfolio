@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+                <a href="{% url 'core:product_inventory_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> {% translate "返回庫存列表" %}
+                </a>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Inventory Adjustment Information -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-box-seam"></i> {% translate "商品庫存調整" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Product Selection -->
+                                <div class="mb-3">
+                                    <label for="{{ form.product.id_for_label }}" class="form-label">
+                                        {{ form.product.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.product }}
+                                    {% if form.product.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.product.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Adjustment Quantity -->
+                                <div class="mb-3">
+                                    <label for="{{ form.adjustment_quantity.id_for_label }}" class="form-label">
+                                        {{ form.adjustment_quantity.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.adjustment_quantity }}
+                                    {% if form.adjustment_quantity.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.adjustment_quantity.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">{{ form.adjustment_quantity.help_text }}</div>
+                                </div>
+
+                                <!-- Adjustment Reason -->
+                                <div class="mb-3">
+                                    <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                        {{ form.reason.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.reason }}
+                                    {% if form.reason.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.reason.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions Card -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title text-info">
+                                    <i class="bi bi-info-circle"></i> {% translate "調整說明" %}
+                                </h6>
+                                <ul class="mb-0">
+                                    <li>{% translate "輸入正數可增加庫存數量（例如：進貨 +10）" %}</li>
+                                    <li>{% translate "輸入負數可減少庫存數量（例如：損耗 -3）" %}</li>
+                                    <li>{% translate "庫存可以為負數，表示缺貨狀態" %}</li>
+                                    <li>{% translate "所有調整都會記錄到操作日誌中" %}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'core:product_inventory_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> {% translate "取消" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {% translate "確認調整" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation and enhancement
+    const adjustmentInput = document.querySelector('#id_adjustment_quantity');
+    const reasonInput = document.querySelector('#id_reason');
+    
+    // Format adjustment quantity input
+    if (adjustmentInput) {
+        adjustmentInput.addEventListener('input', function() {
+            let value = this.value;
+            // Allow negative numbers and ensure proper formatting
+            if (value && !isNaN(value)) {
+                if (value > 0 && !value.startsWith('+')) {
+                    // Optionally show + sign for positive numbers
+                    // this.value = '+' + value;
+                }
+            }
+        });
+    }
+    
+    // Auto-focus on product selection
+    const productSelect = document.querySelector('#id_product');
+    if (productSelect) {
+        productSelect.focus();
+    }
+});
+</script>
+{% endblock %}

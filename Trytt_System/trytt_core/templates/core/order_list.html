@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}訂單管理 - Trytt System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>訂單管理</h2>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'core:course_refund' %}" class="btn btn-outline-danger">
+                        <i class="bi bi-arrow-return-left"></i> 課程退費
+                    </a>
+                    <a href="{% url 'core:course_swap' %}" class="btn btn-outline-warning">
+                        <i class="bi bi-arrow-left-right"></i> 換課
+                    </a>
+                    <a href="{% url 'core:order_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 新增訂單
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            {{ search_form.search_term }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.status_filter }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.date_from }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.date_to }}
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-search"></i> 搜尋
+                            </button>
+                            <a href="{% url 'core:order_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> 清除
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-body">
+                    {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center">訂單編號</th>
+                                        <th class="text-center">類型</th>
+                                        <th class="text-center">會員姓名</th>
+                                        <th class="text-center">訂單日期</th>
+                                        <th class="text-center">總金額</th>
+                                        <th class="text-center">付款方式</th>
+                                        <th class="text-center">訂單狀態</th>
+                                        <th class="text-center">建立者</th>
+                                        <th class="text-center">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <a href="{% url 'core:order_detail' order.pk %}" class="text-decoration-none">
+                                                {{ order.order_code }}
+                                            </a>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if order.order_type == 'refund' %}
+                                                <span class="badge bg-danger">退費</span>
+                                            {% elif order.order_type == 'swap' %}
+                                                <span class="badge bg-warning text-dark">換課</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ order.member.name }}</td>
+                                        <td class="text-center">{{ order.order_date|date:"Y/m/d" }}</td>
+                                        <td class="text-center {% if order.total_amount < 0 %}text-danger{% endif %}">
+                                            ${{ order.total_amount|floatformat:0 }}
+                                        </td>
+                                        <td class="text-center">{{ order.get_payment_method_display }}</td>
+                                        <td class="text-center">
+                                            {% if order.order_status == 'paid' %}
+                                                <span class="badge bg-success">已付款</span>
+                                            {% elif order.order_status == 'unpaid' %}
+                                                <span class="badge bg-warning">未付款</span>
+                                            {% elif order.order_status == 'cancelled' %}
+                                                <span class="badge bg-danger">已取消</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ order.created_by.username }}</td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'core:order_detail' order.pk %}" class="btn btn-outline-info btn-sm">
+                                                    查看
+                                                </a>
+                                                <a href="{% url 'core:order_update' order.pk %}" class="btn btn-outline-primary btn-sm">
+                                                    修改
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                        <nav aria-label="訂單分頁">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">第一頁</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">上一頁</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">下一頁</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search_term %}&search_term={{ request.GET.search_term }}{% endif %}{% if request.GET.status_filter %}&status_filter={{ request.GET.status_filter }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">最後一頁</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <h5 class="text-muted">目前沒有訂單資料</h5>
+                            <p class="text-muted">點擊「新增訂單」按鈕來建立第一筆訂單</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

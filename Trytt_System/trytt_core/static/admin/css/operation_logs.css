@@ -1,0 +1,31 @@
+/* Operation Logs Admin Styling */
+#changelist-form .field-operation_content {
+    max-width: 500px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Make the time column wider */
+#changelist-form .field-operation_time {
+    min-width: 150px;
+}
+
+/* Style for module column */
+#changelist-form .field-module {
+    min-width: 100px;
+    text-transform: capitalize;
+}
+
+/* Style for user column */
+#changelist-form .field-user {
+    min-width: 100px;
+}
+
+/* Improve readability of operation content */
+.field-operation_content {
+    font-family: monospace;
+    line-height: 1.4;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}

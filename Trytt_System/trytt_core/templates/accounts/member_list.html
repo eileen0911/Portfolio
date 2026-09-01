@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "會員管理" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{% translate "會員管理" %}</h2>
+                <a href="{% url 'accounts:member_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> {% translate "新增會員" %}
+                </a>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            {{ search_form.search_term }}
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-search"></i> {% translate "搜尋" %}
+                            </button>
+                            <a href="{% url 'accounts:member_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> {% translate "清除" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Member List -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% translate "會員編號" %}</th>
+                                    <th>{% translate "姓名" %}</th>
+                                    <th>{% translate "手機號碼" %}</th>
+                                    <th>{% translate "註冊日期" %}</th>
+                                    <th>{% translate "負責教練" %}</th>
+                                    <th>{% translate "狀態" %}</th>
+                                    <th>{% translate "操作" %}</th>
+                                </tr>
+                            </thead>
+                    <tbody>
+                        {% for member in page_obj %}
+                        <tr>
+                            <td>{{ member.member_code }}</td>
+                            <td>{{ member.name }}</td>
+                            <td>{{ member.phone }}</td>
+                            <td>{{ member.registration_date }}</td>
+                            <td>{{ member.coach.name }}</td>
+                            <td>
+                                <span class="badge {% if member.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ member.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'accounts:member_update' member.pk %}" class="btn btn-outline-primary btn-sm">
+                                        {% translate "修改" %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">{% translate "沒有找到符合條件的會員" %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                <nav aria-label="會員分頁">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_form.search_term.value %}&search_term={{ search_form.search_term.value }}{% endif %}">第一頁</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_form.search_term.value %}&search_term={{ search_form.search_term.value }}{% endif %}">上一頁</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_form.search_term.value %}&search_term={{ search_form.search_term.value }}{% endif %}">下一頁</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_form.search_term.value %}&search_term={{ search_form.search_term.value }}{% endif %}">最後一頁</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

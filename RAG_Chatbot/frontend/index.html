@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support Chat</title>
+    <link rel="stylesheet" href="/demo/assets/style.css?v=20260821-markdown" />
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Support chat">
+      <section class="chat-surface">
+        <header class="chat-header">
+          <div class="brand-block">
+            <div class="brand-mark" aria-hidden="true">P</div>
+            <div>
+              <div class="title-row">
+                <h1>PowerColor Support</h1>
+                <span class="demo-badge">Demo/POC</span>
+              </div>
+              <p id="sessionMeta">Starting session</p>
+            </div>
+          </div>
+          <button id="resetButton" class="icon-button" type="button" title="Reset chat" aria-label="Reset chat">
+            ↻
+          </button>
+        </header>
+
+        <section id="messages" class="message-list" aria-live="polite" aria-busy="false"></section>
+
+        <section id="sourcePanel" class="source-panel" aria-label="Sources" hidden>
+          <div class="source-header">
+            <h2>Sources</h2>
+            <button id="sourceCloseButton" class="icon-button small" type="button" title="Close sources" aria-label="Close sources">
+              ×
+            </button>
+          </div>
+          <ol id="sourcesList" class="source-list"></ol>
+        </section>
+
+        <footer class="composer-bar">
+          <div id="statusBanner" class="status-banner" role="status" hidden></div>
+          <div id="optionTray" class="option-tray" aria-label="Options"></div>
+          <form id="chatForm" class="composer">
+            <input
+              id="messageInput"
+              name="message"
+              autocomplete="off"
+              maxlength="4000"
+              placeholder="Type your question"
+              disabled
+            />
+            <button id="sendButton" type="submit" disabled>Send</button>
+          </form>
+        </footer>
+      </section>
+    </main>
+
+    <script>
+      window.CHATBOT_FRONTEND_CONFIG = {
+        chatApiBaseUrl: "",
+        parentOrigin: "",
+      };
+    </script>
+    <script src="/demo/assets/app.js?v=20260821-markdown"></script>
+  </body>
+</html>

@@ -1,0 +1,156 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:core_import_management' %}">{% trans '數據導入管理' %}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>{{ title }}</h1>
+    
+    <div class="description">
+        <p>{% trans '請選擇要導入的數據類型，系統會提供相應的 Excel 模板供您下載。' %}</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>{% trans '導入類型' %}</h2>
+            
+            <div class="form-row">
+                <div class="field-box">
+                    <label for="{{ form.import_type.id_for_label }}">{{ form.import_type.label }}:</label>
+                    {{ form.import_type }}
+                    {% if form.import_type.help_text %}
+                        <p class="help">{{ form.import_type.help_text }}</p>
+                    {% endif %}
+                    {% if form.import_type.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.import_type.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="{% trans '下一步：下載模板' %}" class="default" />
+            <a href="{% url 'admin:core_import_management' %}" class="button">{% trans '返回' %}</a>
+        </div>
+    </form>
+    
+    <div class="import-type-details">
+        <h2>{% trans '導入類型說明' %}</h2>
+        
+        <div class="import-type-card">
+            <h3>{% trans '會員數據導入' %}</h3>
+            <p>{% trans '批量導入會員基本資料，包括個人資訊、聯絡方式、負責教練等。' %}</p>
+            <ul>
+                <li>{% trans '必填欄位：姓名、手機號碼、負責教練、註冊日期、狀態' %}</li>
+                <li>{% trans '選填欄位：地址、性別、生日、Email、Line ID、緊急聯絡人、備註' %}</li>
+                <li>{% trans '系統會自動檢查重複的手機號碼' %}</li>
+            </ul>
+        </div>
+        
+        <div class="import-type-card">
+            <h3>{% trans '訂單數據導入' %}</h3>
+            <p>{% trans '批量導入歷史訂單資料，系統會自動建立課程庫存記錄。' %}</p>
+            <ul>
+                <li>{% trans '必填欄位：會員手機號碼、訂單日期、課程名稱、購買數量、單價、付款方式、訂單狀態' %}</li>
+                <li>{% trans '選填欄位：備註' %}</li>
+                <li>{% trans '系統會自動計算訂單總金額' %}</li>
+                <li>{% trans '已付款訂單會自動建立課程庫存' %}</li>
+            </ul>
+        </div>
+        
+        <div class="import-type-card">
+            <h3>{% trans '授課記錄導入' %}</h3>
+            <p>{% trans '批量導入授課記錄，系統會自動從會員課程庫存中扣減。' %}</p>
+            <ul>
+                <li>{% trans '必填欄位：會員手機號碼、課程名稱、授課日期' %}</li>
+                <li>{% trans '選填欄位：備註' %}</li>
+                <li>{% trans '系統會自動匹配會員的課程庫存' %}</li>
+                <li>{% trans '庫存不足時導入會失敗' %}</li>
+                <li>{% trans '允許會員同一天上多堂課' %}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.import-type-details {
+    margin-top: 30px;
+}
+
+.import-type-card {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.import-type-card h3 {
+    margin-top: 0;
+    color: #417690;
+    border-bottom: 2px solid #417690;
+    padding-bottom: 10px;
+}
+
+.import-type-card ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.import-type-card li {
+    margin: 5px 0;
+    padding: 2px 0;
+}
+
+.field-box {
+    margin: 10px 0;
+}
+
+.field-box label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.field-box select {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.help {
+    color: #666;
+    font-style: italic;
+    margin: 5px 0;
+}
+
+.errorlist {
+    color: #ba2121;
+    margin: 5px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.errorlist li {
+    margin: 2px 0;
+    padding: 2px 0;
+}
+</style>
+{% endblock %}

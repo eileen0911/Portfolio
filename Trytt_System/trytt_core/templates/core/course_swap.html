@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}換課 - Trytt System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4">換課</h2>
+
+            <!-- Member Search -->
+            <div class="card mb-3" id="member-search-section">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-search"></i> 搜尋會員</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" id="member-search-input" class="form-control"
+                               placeholder="輸入姓名或手機號碼">
+                        <button class="btn btn-primary" onclick="searchMember()">
+                            <i class="bi bi-search"></i> 搜尋
+                        </button>
+                    </div>
+                    <div id="member-search-results" class="border rounded mt-2"
+                         style="display:none; max-height:200px; overflow-y:auto;"></div>
+                </div>
+            </div>
+
+            <!-- Member Info -->
+            <div class="card mb-3" id="member-info-section" style="display:none;">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong id="member-name-display"></strong>
+                        <span class="text-muted ms-2" id="member-phone-display"></span>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetSearch()">
+                        重新搜尋
+                    </button>
+                </div>
+            </div>
+
+            <!-- Source Inventory List -->
+            <div class="card mb-3" id="inventory-section" style="display:none;">
+                <div class="card-header">
+                    <h5 class="mb-0">選擇要換出的課程庫存</h5>
+                </div>
+                <div class="card-body p-0" id="inventory-list">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Swap Form -->
+            <div class="card mb-3" id="swap-form-section" style="display:none;">
+                <div class="card-header bg-info-subtle">
+                    <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> 換課設定</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Source info -->
+                    <div class="alert alert-light mb-3">
+                        <small class="text-muted d-block">換出課程</small>
+                        <strong id="sw-source-course"></strong>
+                        <span class="ms-2 text-muted">（訂單 <span id="sw-source-order"></span>）</span>
+                        <span class="ms-2">剩餘 <strong id="sw-source-remaining"></strong> 堂</span>
+                        <span class="ms-2">每堂 $<span id="sw-source-price"></span></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">換課堂數</label>
+                            <input type="number" id="swap-qty-input" class="form-control"
+                                   min="1" value="1" oninput="updateSwapPreview()">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">目標課程</label>
+                        <select id="target-course-select" class="form-select"
+                                onchange="updateSwapPreview()">
+                            <option value="">— 請選擇目標課程 —</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">新課程每堂單價（$）</label>
+                        <input type="number" id="new-unit-price-input" class="form-control"
+                               min="1" placeholder="輸入新課程單價" oninput="updateSwapPreview()">
+                    </div>
+
+                    <!-- Price diff preview -->
+                    <div class="card bg-light mb-3" id="price-diff-preview" style="display:none;">
+                        <div class="card-body py-2">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <small class="text-muted">換出金額</small>
+                                    <div>-$<span id="pw-old-amount">0</span></div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">換入金額</small>
+                                    <div>+$<span id="pw-new-amount">0</span></div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">差額</small>
+                                    <div class="fw-bold" id="pw-diff-display">$0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-info" onclick="submitSwap()">
+                            <i class="bi bi-check-lg"></i> 確認換課
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="cancelSwapForm()">
+                            取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success -->
+            <div class="card mb-3 border-success" id="success-section" style="display:none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle"></i> 換課成功</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">換課訂單編號</small>
+                            <div class="fw-bold" id="success-swap-order-code"></div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">會員姓名</small>
+                            <div id="success-member-name"></div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <small class="text-muted">換出課程</small>
+                            <div id="success-old-course"></div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">換入課程</small>
+                            <div id="success-new-course"></div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-4">
+                            <small class="text-muted">換課堂數</small>
+                            <div><span id="success-swap-qty"></span> 堂</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">換出單價</small>
+                            <div>$<span id="success-old-price"></span></div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">換入單價</small>
+                            <div>$<span id="success-new-price"></span></div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small class="text-muted">差額</small>
+                            <div class="fw-bold fs-5" id="success-price-diff"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="btn btn-primary" onclick="resetAll()">繼續換課</button>
+                        <a href="{% url 'core:order_list' %}" class="btn btn-outline-secondary">查看訂單記錄</a>
+                        <a href="{% url 'core:course_balance_list' %}" class="btn btn-outline-secondary">查看課程庫存</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedMember = null;
+let selectedInventory = null;
+
+function searchMember() {
+    const q = document.getElementById('member-search-input').value.trim();
+    if (q.length < 2) { alert('請輸入至少2個字符'); return; }
+
+    fetch(`/api/members/search/?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) { alert('找不到符合的會員'); return; }
+            if (data.length === 1) { selectMember(data[0]); return; }
+            showMemberResults(data);
+        })
+        .catch(() => alert('搜尋失敗，請稍後再試'));
+}
+
+function showMemberResults(members) {
+    const el = document.getElementById('member-search-results');
+    el.innerHTML = '';
+    members.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'p-2 border-bottom';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `<strong>${m.name}</strong> <span class="text-muted">${m.phone}</span>`;
+        div.onclick = () => selectMember(m);
+        el.appendChild(div);
+    });
+    el.style.display = 'block';
+}
+
+function selectMember(m) {
+    selectedMember = m;
+    document.getElementById('member-search-results').style.display = 'none';
+    document.getElementById('member-name-display').textContent = m.name;
+    document.getElementById('member-phone-display').textContent = m.phone;
+    document.getElementById('member-info-section').style.display = 'block';
+    document.getElementById('swap-form-section').style.display = 'none';
+    loadInventory(m.id);
+}
+
+function loadInventory(memberId) {
+    document.getElementById('inventory-section').style.display = 'block';
+    document.getElementById('inventory-list').innerHTML =
+        '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+    fetch(`/api/members/${memberId}/inventory/`)
+        .then(r => r.json())
+        .then(data => renderInventory(data))
+        .catch(() => {
+            document.getElementById('inventory-list').innerHTML =
+                '<div class="alert alert-danger m-3">載入失敗，請稍後再試</div>';
+        });
+}
+
+function renderInventory(inventories) {
+    const el = document.getElementById('inventory-list');
+    if (!inventories.length) {
+        el.innerHTML = '<div class="text-center py-4 text-muted">此會員目前沒有可換出的課程庫存</div>';
+        return;
+    }
+    el.innerHTML = '';
+    const table = document.createElement('table');
+    table.className = 'table table-hover mb-0';
+    table.innerHTML = `
+        <thead class="table-light">
+            <tr>
+                <th>課程名稱</th>
+                <th class="text-center">訂單編號</th>
+                <th class="text-center">訂單日期</th>
+                <th class="text-center">剩餘堂數</th>
+                <th class="text-center">每堂單價</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody id="inventory-tbody"></tbody>`;
+    el.appendChild(table);
+
+    const tbody = document.getElementById('inventory-tbody');
+    inventories.forEach(inv => {
+        const tr = document.createElement('tr');
+        const priceDisplay = inv.unit_price != null ? `$${inv.unit_price.toFixed(0)}` : '—';
+        tr.innerHTML = `
+            <td><strong>${inv.course_name}</strong><br><small class="text-muted">${inv.course_code}</small></td>
+            <td class="text-center">${inv.order_code}</td>
+            <td class="text-center">${inv.order_date}</td>
+            <td class="text-center">${inv.remaining_quantity}</td>
+            <td class="text-center">${priceDisplay}</td>
+            <td class="text-center">
+                <button class="btn btn-info btn-sm"
+                        onclick='selectSourceInventory(${JSON.stringify(inv)})'>
+                    選擇換出
+                </button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function selectSourceInventory(inv) {
+    selectedInventory = inv;
+    document.getElementById('sw-source-course').textContent = inv.course_name;
+    document.getElementById('sw-source-order').textContent = inv.order_code;
+    document.getElementById('sw-source-remaining').textContent = inv.remaining_quantity;
+    document.getElementById('sw-source-price').textContent =
+        inv.unit_price != null ? inv.unit_price.toFixed(0) : '未知';
+    document.getElementById('swap-qty-input').max = inv.remaining_quantity;
+    document.getElementById('swap-qty-input').value = 1;
+    document.getElementById('new-unit-price-input').value = '';
+    document.getElementById('price-diff-preview').style.display = 'none';
+
+    loadTargetCourses(inv.course_id);
+    document.getElementById('swap-form-section').style.display = 'block';
+    document.getElementById('swap-form-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function loadTargetCourses(excludeCourseId) {
+    const select = document.getElementById('target-course-select');
+    select.innerHTML = '<option value="">載入中...</option>';
+
+    fetch('/api/courses/active/')
+        .then(r => r.json())
+        .then(courses => {
+            select.innerHTML = '<option value="">— 請選擇目標課程 —</option>';
+            courses.forEach(c => {
+                if (c.id === excludeCourseId) return; // exclude same course
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.course_code} - ${c.name}`;
+                select.appendChild(opt);
+            });
+        })
+        .catch(() => {
+            select.innerHTML = '<option value="">載入失敗</option>';
+        });
+}
+
+function updateSwapPreview() {
+    if (!selectedInventory) return;
+    const qty = parseInt(document.getElementById('swap-qty-input').value) || 0;
+    const newPrice = parseFloat(document.getElementById('new-unit-price-input').value) || 0;
+    const oldPrice = selectedInventory.unit_price || 0;
+
+    const oldAmount = qty * oldPrice;
+    const newAmount = qty * newPrice;
+    const diff = newAmount - oldAmount;
+
+    document.getElementById('pw-old-amount').textContent = oldAmount.toFixed(0);
+    document.getElementById('pw-new-amount').textContent = newAmount.toFixed(0);
+
+    const diffEl = document.getElementById('pw-diff-display');
+    if (diff > 0) {
+        diffEl.textContent = `+$${diff.toFixed(0)} 需補繳`;
+        diffEl.className = 'fw-bold text-danger';
+    } else if (diff < 0) {
+        diffEl.textContent = `-$${Math.abs(diff).toFixed(0)} 退回`;
+        diffEl.className = 'fw-bold text-success';
+    } else {
+        diffEl.textContent = '$0 無差額';
+        diffEl.className = 'fw-bold text-muted';
+    }
+
+    if (qty > 0 && newPrice > 0) {
+        document.getElementById('price-diff-preview').style.display = 'block';
+    }
+}
+
+function cancelSwapForm() {
+    document.getElementById('swap-form-section').style.display = 'none';
+    selectedInventory = null;
+}
+
+function submitSwap() {
+    if (!selectedMember || !selectedInventory) return;
+
+    const qty = parseInt(document.getElementById('swap-qty-input').value);
+    const targetCourseId = document.getElementById('target-course-select').value;
+    const newUnitPrice = document.getElementById('new-unit-price-input').value;
+
+    if (!qty || qty <= 0) { alert('請輸入有效的換課堂數'); return; }
+    if (qty > selectedInventory.remaining_quantity) {
+        alert(`換課數量不能超過剩餘堂數（${selectedInventory.remaining_quantity}堂）`);
+        return;
+    }
+    if (!targetCourseId) { alert('請選擇目標課程'); return; }
+    if (!newUnitPrice || parseFloat(newUnitPrice) <= 0) { alert('請輸入新課程單價'); return; }
+
+    const targetCourseName = document.getElementById('target-course-select').selectedOptions[0].text;
+    const diff = qty * parseFloat(newUnitPrice) - qty * (selectedInventory.unit_price || 0);
+    const diffText = diff > 0 ? `需補繳 $${diff.toFixed(0)}` :
+                     diff < 0 ? `退回 $${Math.abs(diff).toFixed(0)}` : '無差額';
+
+    if (!confirm(
+        `確定將 ${qty} 堂「${selectedInventory.course_name}」換成「${targetCourseName}」？\n` +
+        `差額：${diffText}\n此操作無法復原。`
+    )) return;
+
+    const formData = new FormData();
+    formData.append('member_id', selectedMember.id);
+    formData.append('source_inventory_id', selectedInventory.id);
+    formData.append('swap_qty', qty);
+    formData.append('target_course_id', targetCourseId);
+    formData.append('new_unit_price', newUnitPrice);
+
+    fetch('/api/courses/swap/', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(data);
+        } else {
+            alert(data.error || '換課失敗，請稍後再試');
+        }
+    })
+    .catch(() => alert('換課失敗，請稍後再試'));
+}
+
+function showSuccess(data) {
+    document.getElementById('inventory-section').style.display = 'none';
+    document.getElementById('swap-form-section').style.display = 'none';
+    document.getElementById('success-swap-order-code').textContent = data.swap_order_code;
+    document.getElementById('success-member-name').textContent = data.member_name;
+    document.getElementById('success-old-course').textContent = data.old_course_name;
+    document.getElementById('success-new-course').textContent = data.new_course_name;
+    document.getElementById('success-swap-qty').textContent = data.swap_qty;
+    document.getElementById('success-old-price').textContent =
+        parseFloat(data.old_unit_price).toFixed(0);
+    document.getElementById('success-new-price').textContent =
+        parseFloat(data.new_unit_price).toFixed(0);
+
+    const diff = parseFloat(data.price_diff);
+    const diffEl = document.getElementById('success-price-diff');
+    if (diff > 0) {
+        diffEl.textContent = `+$${diff.toFixed(0)}（需補繳）`;
+        diffEl.className = 'fw-bold fs-5 text-danger';
+    } else if (diff < 0) {
+        diffEl.textContent = `-$${Math.abs(diff).toFixed(0)}（退回）`;
+        diffEl.className = 'fw-bold fs-5 text-success';
+    } else {
+        diffEl.textContent = '$0（無差額）';
+        diffEl.className = 'fw-bold fs-5 text-muted';
+    }
+
+    document.getElementById('success-section').style.display = 'block';
+    document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetSearch() {
+    selectedMember = null;
+    selectedInventory = null;
+    document.getElementById('member-search-input').value = '';
+    document.getElementById('member-info-section').style.display = 'none';
+    document.getElementById('inventory-section').style.display = 'none';
+    document.getElementById('swap-form-section').style.display = 'none';
+}
+
+function resetAll() {
+    resetSearch();
+    document.getElementById('success-section').style.display = 'none';
+}
+
+document.getElementById('member-search-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') searchMember();
+});
+
+function getCookie(name) {
+    let val = null;
+    if (document.cookie) {
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) val = decodeURIComponent(c.slice(name.length + 1));
+        });
+    }
+    return val;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}訂單詳情 - {{ order.order_code }} - Trytt System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>訂單詳情 - {{ order.order_code }}</h2>
+                <div>
+                    <a href="{% url 'core:order_update' order.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> 修改訂單
+                    </a>
+                    <a href="{% url 'core:order_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回訂單列表
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Order Information -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">訂單基本資料</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">訂單編號:</td>
+                                    <td>{{ order.order_code }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">會員姓名:</td>
+                                    <td>
+                                        <a href="{% url 'accounts:member_update' order.member.pk %}" class="text-decoration-none">
+                                            {{ order.member.name }} ({{ order.member.member_code }})
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">訂單日期:</td>
+                                    <td>{{ order.order_date|date:"Y年m月d日" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">付款方式:</td>
+                                    <td>{{ order.get_payment_method_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">訂單狀態:</td>
+                                    <td>
+                                        {% if order.order_status == 'paid' %}
+                                            <span class="badge bg-success">已付款</span>
+                                        {% elif order.order_status == 'unpaid' %}
+                                            <span class="badge bg-warning">未付款</span>
+                                        {% elif order.order_status == 'cancelled' %}
+                                            <span class="badge bg-danger">已取消</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">總金額:</td>
+                                    <td class="h5 text-primary">${{ order.total_amount|floatformat:0 }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">建立者:</td>
+                                    <td>{{ order.created_by.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">建立時間:</td>
+                                    <td>{{ order.created_at|date:"Y年m月d日 H:i" }}</td>
+                                </tr>
+                                {% if order.updated_at != order.created_at %}
+                                <tr>
+                                    <td class="fw-bold">更新時間:</td>
+                                    <td>{{ order.updated_at|date:"Y年m月d日 H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if order.notes %}
+                                <tr>
+                                    <td class="fw-bold">備註:</td>
+                                    <td>{{ order.notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member Information -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">會員資料</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">會員編號:</td>
+                                    <td>{{ order.member.member_code }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">姓名:</td>
+                                    <td>{{ order.member.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">手機號碼:</td>
+                                    <td>{{ order.member.phone }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">負責教練:</td>
+                                    <td>{{ order.member.coach.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">註冊日期:</td>
+                                    <td>{{ order.member.registration_date|date:"Y年m月d日" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">狀態:</td>
+                                    <td>
+                                        {% if order.member.status == 'active' %}
+                                            <span class="badge bg-success">啟用</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">停用</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">訂單明細</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if order_items %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-center">項目類型</th>
+                                                <th class="text-center">項目名稱</th>
+                                                <th class="text-center">數量</th>
+                                                <th class="text-center">單價</th>
+                                                <th class="text-center">小計</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in order_items %}
+                                            <tr>
+                                                <td class="text-center">
+                                                    {% if item.item_type == 'course' %}
+                                                        <span class="badge bg-info">課程</span>
+                                                    {% elif item.item_type == 'product' %}
+                                                        <span class="badge bg-warning">商品</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{ item.get_item_name }}</td>
+                                                <td class="text-center">{{ item.quantity }}</td>
+                                                <td class="text-center">${{ item.unit_price|floatformat:0 }}</td>
+                                                <td class="text-center fw-bold">${{ item.total_price|floatformat:0 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <th colspan="4" class="text-center">總計:</th>
+                                                <th class="text-center">${{ order.total_amount|floatformat:0 }}</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <p class="text-muted">此訂單沒有明細項目</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Inventory Information (if order is paid and has courses) -->
+            {% if order.order_status == 'paid' and course_inventories %}
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">課程庫存資訊</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th class="text-center">課程名稱</th>
+                                                            <th class="text-center">初始數量</th>
+                                                            <th class="text-center">剩餘數量</th>
+                                                            <th class="text-center">狀態</th>
+                                                            <th class="text-center">訂單編號</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for inventory in course_inventories %}
+                                                        <tr>
+                                                            <td class="text-center">{{ inventory.course.name }}</td>
+                                                            <td class="text-center">{{ inventory.initial_quantity }}</td>
+                                                            <td class="text-center">{{ inventory.remaining_quantity }}</td>
+                                                            <td class="text-center">
+                                                                {% if inventory.status == 'active' %}
+                                                                    <span class="badge bg-success">啟用</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">已用完</span>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td class="text-center">{{ inventory.order.order_code }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

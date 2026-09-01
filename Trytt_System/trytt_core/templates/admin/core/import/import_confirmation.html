@@ -1,0 +1,315 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:core_import_management' %}">{% trans '數據導入管理' %}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>{{ title }}</h1>
+    
+    <div class="import-summary">
+        <h2>{% trans '導入摘要' %}</h2>
+        <div class="summary-info">
+            <div class="info-item">
+                <span class="info-label">{% trans '導入類型' %}:</span>
+                <span class="info-value">
+                    {% if import_type == 'members' %}
+                        {% trans '會員數據導入' %}
+                    {% elif import_type == 'orders' %}
+                        {% trans '訂單數據導入' %}
+                    {% elif import_type == 'sessions' %}
+                        {% trans '授課記錄導入' %}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">{% trans '資料筆數' %}:</span>
+                <span class="info-value">{{ total_rows }}</span>
+            </div>
+        </div>
+    </div>
+    
+    {% if warnings %}
+        <div class="import-warnings">
+            <h2>{% trans '注意事項' %}</h2>
+            <div class="warning-list">
+                {% for warning in warnings %}
+                    <div class="warning-item">
+                        <span class="warning-icon">⚠️</span>
+                        <span class="warning-text">{{ warning }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="import-actions">
+        <h2>{% trans '導入操作' %}</h2>
+        <p class="action-description">
+            {% trans '請確認要執行導入操作。導入後無法撤銷，請確保數據正確。' %}
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="confirmation-checkbox">
+                <label for="{{ form.confirm_import.id_for_label }}">
+                    {{ form.confirm_import }}
+                    <span class="checkbox-label">{{ form.confirm_import.label }}</span>
+                </label>
+                {% if form.confirm_import.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.confirm_import.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="action-buttons">
+                <input type="submit" value="{% trans '確認導入' %}" class="button default" />
+                <a href="{% url 'admin:core_import_management' %}" class="button">
+                    {% trans '取消導入' %}
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="import-details">
+        <h2>{% trans '導入詳情' %}</h2>
+        
+        {% if import_type == 'members' %}
+            <div class="detail-section">
+                <h3>{% trans '會員數據導入' %}</h3>
+                <ul>
+                    <li>{% trans '將建立新的會員記錄' %}</li>
+                    <li>{% trans '系統會檢查手機號碼重複' %}</li>
+                    <li>{% trans '會自動分配會員編號' %}</li>
+                    <li>{% trans '會記錄操作日誌' %}</li>
+                </ul>
+            </div>
+        {% elif import_type == 'orders' %}
+            <div class="detail-section">
+                <h3>{% trans '訂單數據導入' %}</h3>
+                <ul>
+                    <li>{% trans '將建立新的訂單記錄' %}</li>
+                    <li>{% trans '會自動計算訂單總金額' %}</li>
+                    <li>{% trans '已付款訂單會自動建立課程庫存' %}</li>
+                    <li>{% trans '會記錄操作日誌' %}</li>
+                </ul>
+            </div>
+        {% elif import_type == 'sessions' %}
+            <div class="detail-section">
+                <h3>{% trans '授課記錄導入' %}</h3>
+                <ul>
+                    <li>{% trans '將建立新的授課記錄' %}</li>
+                    <li>{% trans '會自動從會員課程庫存中扣減' %}</li>
+                    <li>{% trans '庫存不足時導入會失敗' %}</li>
+                    <li>{% trans '會記錄操作日誌' %}</li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.import-summary {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.summary-info {
+    margin: 15px 0;
+}
+
+.info-item {
+    display: flex;
+    margin: 10px 0;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #666;
+    min-width: 120px;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #333;
+}
+
+.import-warnings {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #856404;
+    border-radius: 4px;
+    background-color: #fff3cd;
+}
+
+.import-warnings h2 {
+    margin-top: 0;
+    color: #856404;
+}
+
+.warning-list {
+    margin: 15px 0;
+}
+
+.warning-item {
+    display: flex;
+    align-items: flex-start;
+    margin: 8px 0;
+    padding: 8px;
+    background-color: #fff;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+}
+
+.warning-icon {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.warning-text {
+    flex: 1;
+    color: #856404;
+}
+
+.import-actions {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #417690;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.import-actions h2 {
+    margin-top: 0;
+    color: #417690;
+}
+
+.action-description {
+    color: #666;
+    margin: 10px 0;
+    font-style: italic;
+}
+
+.confirmation-checkbox {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.confirmation-checkbox label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.confirmation-checkbox input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.checkbox-label {
+    color: #333;
+}
+
+.errorlist {
+    color: #ba2121;
+    margin: 5px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.errorlist li {
+    margin: 2px 0;
+    padding: 2px 0;
+}
+
+.action-buttons {
+    margin: 20px 0;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.button:hover {
+    background-color: #545b62;
+}
+
+.button.default {
+    background-color: #417690;
+}
+
+.button.default:hover {
+    background-color: #205067;
+}
+
+.import-details {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.import-details h2 {
+    margin-top: 0;
+    color: #417690;
+}
+
+.detail-section {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.detail-section h3 {
+    margin-top: 0;
+    color: #417690;
+    border-bottom: 2px solid #417690;
+    padding-bottom: 10px;
+}
+
+.detail-section ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.detail-section li {
+    margin: 5px 0;
+    padding: 2px 0;
+    color: #333;
+}
+</style>
+{% endblock %}

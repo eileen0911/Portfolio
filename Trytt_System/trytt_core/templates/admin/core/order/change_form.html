@@ -1,0 +1,109 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'admin/js/order_item_dynamic.js' %}"></script>
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script>
+(function($) {
+    'use strict';
+    
+    console.log('Custom admin template loaded');
+    
+    // Function to update item_id dropdown based on item_type
+    function updateItemIdDropdown(itemTypeSelect, itemIdSelect) {
+        var itemType = itemTypeSelect.val();
+        var currentValue = itemIdSelect.val();
+        
+        console.log('Updating dropdown for item_type:', itemType);
+        
+        // Clear existing options
+        itemIdSelect.empty();
+        
+        if (itemType === 'course') {
+            // Add default option
+            itemIdSelect.append('<option value="">請選擇課程</option>');
+            
+            // Get course data via AJAX
+            $.ajax({
+                url: '/api/courses/',
+                type: 'GET',
+                success: function(data) {
+                    console.log('Course data loaded:', data);
+                    data.forEach(function(course) {
+                        var option = $('<option></option>')
+                            .attr('value', course.id)
+                            .text(course.course_code + ' - ' + course.name);
+                        itemIdSelect.append(option);
+                    });
+                    
+                    // Restore previous value if it exists and is valid
+                    if (currentValue && itemIdSelect.find('option[value="' + currentValue + '"]').length > 0) {
+                        itemIdSelect.val(currentValue);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('Failed to load course data:', error);
+                    itemIdSelect.append('<option value="">載入課程資料失敗</option>');
+                }
+            });
+        } else if (itemType === 'product') {
+            itemIdSelect.append('<option value="">請選擇商品</option>');
+        } else {
+            itemIdSelect.append('<option value="">請先選擇項目類型</option>');
+        }
+    }
+    
+    // Function to setup event handlers for a specific row
+    function setupRowHandlers(row) {
+        var itemTypeSelect = row.find('select[name$="-item_type"]');
+        var itemIdSelect = row.find('select[name$="-item_id"]');
+        
+        if (itemTypeSelect.length && itemIdSelect.length && !itemTypeSelect.data('initialized')) {
+            console.log('Setting up handlers for row');
+            itemTypeSelect.data('initialized', true);
+            
+            itemTypeSelect.on('change', function() {
+                console.log('Item type changed to:', $(this).val());
+                updateItemIdDropdown(itemTypeSelect, itemIdSelect);
+            });
+            
+            // Initialize the dropdown
+            updateItemIdDropdown(itemTypeSelect, itemIdSelect);
+        }
+    }
+    
+    // Initialize handlers
+    function initializeHandlers() {
+        console.log('Initializing order item handlers');
+        
+        // Handle existing rows
+        $('.inline-group .tabular tr').each(function() {
+            setupRowHandlers($(this));
+        });
+        
+        // Handle dynamically added rows
+        $(document).on('click', '.add-row a', function() {
+            console.log('Add row clicked');
+            setTimeout(function() {
+                $('.inline-group .tabular tr').each(function() {
+                    setupRowHandlers($(this));
+                });
+            }, 200);
+        });
+    }
+    
+    // Initialize when document is ready
+    $(document).ready(function() {
+        console.log('Document ready, initializing handlers');
+        initializeHandlers();
+    });
+    
+})(django.jQuery);
+</script>
+{% endblock %}
+

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% translate "課程管理" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{% translate "課程管理" %}</h2>
+                <a href="{% url 'core:course_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> {% translate "新增課程" %}
+                </a>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="{% translate '搜尋課程名稱' %}"
+                                       value="{{ request.GET.search|default:'' }}">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-search"></i> {% translate "搜尋" %}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'core:course_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> {% translate "清除" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Course List -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% translate "課程編號" %}</th>
+                                    <th>{% translate "課程名稱" %}</th>
+                                    <th>{% translate "數量選項" %}</th>
+                                    <th>{% translate "單價選項" %}</th>
+                                    <th>{% translate "狀態" %}</th>
+                                    <th>{% translate "操作" %}</th>
+                                </tr>
+                            </thead>
+                    <tbody>
+                        {% for course in courses %}
+                        <tr>
+                            <td>{{ course.course_code }}</td>
+                            <td>{{ course.name }}</td>
+                            <td>
+                                {% if course.unlimited_quantity %}
+                                    {% translate "不限制" %}
+                                {% else %}
+                                    {{ course.quantity_options|default:'-' }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if course.unlimited_price %}
+                                    {% translate "不限制" %}
+                                {% else %}
+                                    {{ course.price_options|default:'-' }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if course.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ course.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'core:course_update' course.pk %}" class="btn btn-outline-primary btn-sm">
+                                        {% translate "修改" %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">{% translate "沒有找到符合條件的課程" %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                <nav aria-label="課程分頁">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">第一頁</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">上一頁</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">下一頁</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">最後一頁</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Highlight search results if search parameter exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search');
+        if (searchQuery) {
+            document.querySelector('input[name="search"]').value = searchQuery;
+        }
+    });
+</script>
+{% endblock %}

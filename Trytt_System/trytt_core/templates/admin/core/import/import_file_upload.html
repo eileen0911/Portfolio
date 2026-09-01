@@ -1,0 +1,235 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:core_import_management' %}">{% trans '數據導入管理' %}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>{{ title }}</h1>
+    
+    <div class="import-info-section">
+        <h2>{{ import_info.name }}</h2>
+        <p class="description">{{ import_info.description }}</p>
+        
+        <div class="required-fields">
+            <h3>{% trans '必填欄位' %}</h3>
+            <p>{{ import_info.required_fields }}</p>
+        </div>
+        
+        <div class="template-download">
+            <h3>{% trans '下載模板' %}</h3>
+            <p>{% trans '請先下載 Excel 模板，按照模板格式整理您的數據。' %}</p>
+            <a href="{% url 'admin:core_download_template' import_type=import_type %}" class="button default">
+                {% trans '下載' %}{{ import_type }}_import_template.xlsx
+            </a>
+        </div>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>{% trans '上傳檔案' %}</h2>
+            
+            <div class="form-row">
+                <div class="field-box">
+                    <label for="{{ form.import_file.id_for_label }}">{{ form.import_file.label }}:</label>
+                    {{ form.import_file }}
+                    {% if form.import_file.help_text %}
+                        <p class="help">{{ form.import_file.help_text }}</p>
+                    {% endif %}
+                    {% if form.import_file.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.import_file.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="{% trans '上傳並驗證' %}" class="default" />
+            <a href="{% url 'admin:core_import_management' %}" class="button">{% trans '返回' %}</a>
+        </div>
+    </form>
+    
+    <div class="upload-instructions">
+        <h2>{% trans '上傳說明' %}</h2>
+        
+        <div class="instruction-step">
+            <h3>{% trans '1. 準備數據' %}</h3>
+            <ul>
+                <li>{% trans '確保所有必填欄位都有資料' %}</li>
+                <li>{% trans '檢查數據格式是否正確' %}</li>
+                <li>{% trans '移除空行和無效資料' %}</li>
+            </ul>
+        </div>
+        
+        <div class="instruction-step">
+            <h3>{% trans '2. 檔案要求' %}</h3>
+            <ul>
+                <li>{% trans '支援 .xlsx 和 .xls 格式' %}</li>
+                <li>{% trans '檔案大小限制：10MB' %}</li>
+                <li>{% trans '第一行必須是標題行' %}</li>
+                <li>{% trans '數據從第二行開始' %}</li>
+            </ul>
+        </div>
+        
+        <div class="instruction-step">
+            <h3>{% trans '3. 驗證流程' %}</h3>
+            <ul>
+                <li>{% trans '系統會檢查必填欄位' %}</li>
+                <li>{% trans '驗證數據格式和關聯性' %}</li>
+                <li>{% trans '檢查重複資料' %}</li>
+                <li>{% trans '如有錯誤會顯示詳細訊息' %}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.import-info-section {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.import-info-section h2 {
+    margin-top: 0;
+    color: #417690;
+}
+
+.description {
+    font-size: 16px;
+    margin: 10px 0;
+    color: #333;
+}
+
+.required-fields {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+}
+
+.required-fields h3 {
+    margin-top: 0;
+    color: #856404;
+}
+
+.template-download {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 4px;
+}
+
+.template-download h3 {
+    margin-top: 0;
+    color: #0c5460;
+}
+
+.upload-instructions {
+    margin-top: 30px;
+}
+
+.instruction-step {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.instruction-step h3 {
+    margin-top: 0;
+    color: #417690;
+    border-bottom: 2px solid #417690;
+    padding-bottom: 10px;
+}
+
+.instruction-step ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.instruction-step li {
+    margin: 5px 0;
+    padding: 2px 0;
+}
+
+.field-box {
+    margin: 10px 0;
+}
+
+.field-box label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.field-box input[type="file"] {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.help {
+    color: #666;
+    font-style: italic;
+    margin: 5px 0;
+}
+
+.errorlist {
+    color: #ba2121;
+    margin: 5px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.errorlist li {
+    margin: 2px 0;
+    padding: 2px 0;
+}
+
+.button {
+    display: inline-block;
+    padding: 8px 16px;
+    margin: 5px;
+    background-color: #417690;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #205067;
+}
+
+.button.default {
+    background-color: #417690;
+}
+
+.button.default:hover {
+    background-color: #205067;
+}
+</style>
+{% endblock %}

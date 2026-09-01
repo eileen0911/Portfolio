@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% translate "商品庫存管理" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{% translate "商品庫存管理" %}</h2>
+                <a href="{% url 'core:product_inventory_adjust' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> {% translate "調整庫存" %}
+                </a>
+            </div>
+
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="{% translate '搜尋商品名稱或編號' %}"
+                                       value="{{ request.GET.search|default:'' }}">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-search"></i> {% translate "搜尋" %}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'core:product_inventory_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> {% translate "清除" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Product Inventory List -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">{% translate "商品編號" %}</th>
+                                    <th class="text-center">{% translate "商品名稱" %}</th>
+                                    <th class="text-center">{% translate "庫存數量" %}</th>
+                                    <th class="text-center">{% translate "最後更新日期" %}</th>
+                                    <th class="text-center">{% translate "最後更新者" %}</th>
+                                    <th class="text-center">{% translate "操作" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inventory in inventories %}
+                                <tr>
+                                    <td class="text-center">{{ inventory.product.product_code }}</td>
+                                    <td class="text-center">{{ inventory.product.name }}</td>
+                                    <td class="text-center">
+                                        <span class="fw-bold {% if inventory.quantity < 0 %}text-danger{% elif inventory.quantity == 0 %}text-warning{% else %}text-success{% endif %}">
+                                            {{ inventory.quantity }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">{{ inventory.updated_at|date:"Y-m-d H:i" }}</td>
+                                    <td class="text-center">{{ inventory.last_updated_by.username }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'core:product_inventory_adjust' %}" class="btn btn-outline-primary btn-sm">
+                                                {% translate "調整" %}
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">{% translate "沒有找到符合條件的商品庫存" %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.paginator.num_pages > 1 %}
+                    <nav aria-label="庫存分頁">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">第一頁</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">上一頁</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+                                </span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">下一頁</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">最後一頁</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Information Note -->
+            <div class="alert alert-info mt-3" role="alert">
+                <i class="bi bi-info-circle"></i>
+                <strong>{% translate "說明：" %}</strong>
+                <ul class="mb-0 mt-2">
+                    <li>{% translate "庫存數量顯示：綠色為正數庫存，黃色為零庫存，紅色為負數（缺貨）" %}</li>
+                    <li>{% translate "點擊「調整」按鈕可以增加或減少該商品的庫存數量" %}</li>
+                    <li>{% translate "所有庫存變動都會自動記錄到操作日誌中" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Highlight search results if search parameter exists
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search');
+        if (searchQuery) {
+            document.querySelector('input[name="search"]').value = searchQuery;
+        }
+    });
+</script>
+{% endblock %}
