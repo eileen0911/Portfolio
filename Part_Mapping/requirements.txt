@@ -1,0 +1,6 @@
+pandas
+openpyxl
+openai
+httpx
+xlrd
+streamlit

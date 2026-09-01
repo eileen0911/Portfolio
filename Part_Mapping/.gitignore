@@ -1,0 +1,41 @@
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments and local env files
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Streamlit local config and logs
+.streamlit/secrets.toml
+*.log
+
+# Project data and generated artifacts
+source/*
+output/
+*.xlsx
+*.xls
+*.pkl
+
+# Local agent/tooling state
+.agents/
+.codex/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+!source/.gitkeep
